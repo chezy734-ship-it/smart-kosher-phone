@@ -1,124 +1,119 @@
-# פלאפון כשר חכם v1.0
-## Smart Kosher Phone
+# פלאפון כשר חכם — Smart Kosher Phone
 
-דיבורית בלוטוס מתקדמת למחשב Windows
+![banner](docs/banner.svg)
 
----
+**גרסה 1.0** | Windows 10/11 | Python 3.10+ | PyQt6/PySide6
 
-## הפעלה מהירה
-```
-run.bat
-```
+דיבורית בלוטוס חכמה למחשב Windows — מחברת את הפלאפון הכשר למחשב כדיבורית HFP ומנהלת את כל הצד הקולי: שיחות, תא קולי, הודעות, בייביסיטר, בית חכם ועוד — בממשק עברי מלא (גם אנגלית, עם מעבר RTL/LTR מיידי).
 
 ---
 
-## קומפיל ל-EXE עצמאי (ללא Python)
+## 📥 הורדה והתקנה
 
-### הכנה חד-פעמית
-```
+### קובץ EXE מוכן (מומלץ — בלי Python)
+
+| קובץ | גודל | קישור |
+|---|---|---|
+| `SmartKosherPhone.exe` | ~356 MB | [הורדה ישירה](https://github.com/chezy734-ship-it/smart-kosher-phone/raw/main/dist/SmartKosherPhone.exe) |
+
+> ⚠️ הקובץ גדול ומועלה דרך **Git LFS** — ההורדה מתבצעת אוטומטית בלחיצה על הקישור (או דרך כפתור ה-Download בעמוד הקובץ ב-GitHub). חלצו והריצו — אין צורך בהתקנת Python.
+
+### מהקוד (למפתחים)
+
+```bash
 pip install nuitka zstandard ordered-set pyinstaller
 pip install PySide6 bleak sounddevice vosk
+python main.py
 ```
 
 ---
 
-### אפשרות א — קובץ EXE בודד (הכל כלול)
-```
-python -m nuitka ^
-  --standalone ^
-  --onefile ^
-  --windows-console-mode=disable ^
-  --windows-icon-from-ico=app\resources\icon.ico ^
-  --output-filename=SmartKosherPhone.exe ^
-  --output-dir=dist ^
-  --include-package=app ^
-  --include-package=bleak ^
-  --include-package=vosk ^
-  --include-data-dir=app\resources=app\resources ^
-  --include-data-files=app\style_light.qss=app\style_light.qss ^
-  --include-data-files=app\style_dark.qss=app\style_dark.qss ^
-  --plugin-enable=pyside6 ^
-  --windows-product-name="Smart Kosher Phone" ^
-  --windows-product-version=1.0.0.0 ^
-  main.py
-```
-**תוצאה:** `dist\SmartKosherPhone.exe` — קובץ אחד (~60-80MB), רץ בלי כלום
+## 🚀 הפעלה ראשונה
+
+1. הריצו את `SmartKosherPhone.exe` (או `run.bat`).
+2. בלשונית **מכשירים** — סרקו וצרפו את הפלאפון הכשר (חיבור בלוטוס RFCOMM אמיתי).
+3. בלשונית **ממשק שיחה** — חיוג, מענה, יומן שיחות, הקלטות.
+4. בלי פלאפון מחובר? תופיע תצוגת **מצב הדגמה** ברורה לניסיון התוכנה.
 
 ---
 
-### אפשרות ב — תיקיית standalone (קובץ EXE קטן + קבצי משנה)
-```
-python -m nuitka ^
-  --standalone ^
-  --windows-console-mode=disable ^
-  --windows-icon-from-ico=app\resources\icon.ico ^
-  --output-filename=SmartKosherPhone.exe ^
-  --output-dir=dist_dir ^
-  --include-package=app ^
-  --include-package=bleak ^
-  --include-package=vosk ^
-  --include-data-dir=app\resources=app\resources ^
-  --include-data-files=app\style_light.qss=app\style_light.qss ^
-  --include-data-files=app\style_dark.qss=app\style_dark.qss ^
-  --plugin-enable=pyside6 ^
-  main.py
-```
-**תוצאה:** `dist_dir\SmartKosherPhone.dist\` — תיקייה עם EXE קטן + DLLs. הפץ את כל התיקייה.
+## ✨ תכונות עיקריות
+
+| לשונית | מה היא עושה |
+|---|---|
+| **ממשק שיחה** | חיוג / שיחה פעילה / אנשי קשר / יומן / הקלטות / הגדרות |
+| **מכשירים** | מספר מכשירי בלוטוס מוכרים, סריקה, זיהוי מספר אוטומטי (AT+CNUM), חיבור-מחדש אוטומטי |
+| **תא קולי** | הודעות, כללי מענה, הודעות פתיח |
+| **בייביסיטר** | ניטור קולי עם AI לזיהוי בכי/קול, שלוחות, התראות, מענה אוטומטי |
+| **הודעות** | שליחת הודעות DTMF (TextModem) |
+| **בית חכם** | שליטה ברכיבי בית חכם דרך קו טלפוני: הקצאת מקש, מצבים מותאמים, הכרזה קולית מוקלטת, הפעלה/כיבוי לזמן קצוב |
+| **הגדרות** | ססמה, שפה מיידית, ערכת נושא בהיר/כהה |
+
+### נקודות חוזק
+
+- **עיצוב חדש** — פינות מעוגלות, ערכות נושא בהיר/כהה, מצבי hover/pressed/disabled
+- **תרגום מלא לאנגלית** — יישור LTR מלא; סרגל הניווט עובר צד בלחיצה
+- **מתג הפעלה/כיבוי** לכל לשונית (מבלי לאבד הגדרות)
+- **אימות אמיתי** — כל פקודת AT נבדקת שנשלחה בהצלחה לפני עדכון המצב
+- **תאריך עברי** מובנה בממשק
 
 ---
 
-### PyInstaller (חלופה אם Nuitka נכשל)
-```
-:: קובץ אחד:
-pyinstaller --onefile --windowed --name SmartKosherPhone ^
-  --add-data "app\style_light.qss;app" ^
-  --add-data "app\style_dark.qss;app" ^
-  --add-data "app\resources;app\resources" ^
-  --hidden-import bleak --hidden-import bleak.backends.winrt ^
-  --hidden-import vosk --hidden-import sounddevice ^
-  --hidden-import PySide6.QtMultimedia ^
-  main.py
+## 🔨 בניית EXE מקוד המקור
 
-:: תיקיית standalone (EXE קטן):
-pyinstaller --onedir --windowed --name SmartKosherPhone ^
-  --add-data "app\style_light.qss;app" ^
-  --add-data "app\style_dark.qss;app" ^
-  --add-data "app\resources;app\resources" ^
-  --hidden-import bleak --hidden-import vosk ^
+### אפשרות א' — קובץ EXE בודד (הכל כלול)
+
+```bash
+python -m nuitka \
+  --standalone --onefile --windows-console-mode=disable \
+  --windows-icon-from-ico=app\resources\icon.ico \
+  --output-filename=SmartKosherPhone.exe --output-dir=dist \
+  --include-package=app --include-package=bleak --include-package=vosk \
+  --include-data-dir=app\resources=app\resources \
+  --include-data-files=app\style_light.qss=app\style_light.qss \
+  --include-data-files=app\style_dark.qss=app\style_dark.qss \
+  --plugin-enable=pyside6 \
+  --windows-product-name="Smart Kosher Phone" --windows-product-version=1.0.0.0 \
+  main.py
+```
+
+**תוצאה:** `dist\SmartKosherPhone.exe` — רץ בלי התקנת כלום.
+
+### אפשרות ב' — PyInstaller (חלופה)
+
+```bash
+pyinstaller --onefile --windowed --name SmartKosherPhone \
+  --add-data "app\style_light.qss;app" \
+  --add-data "app\style_dark.qss;app" \
+  --add-data "app\resources;app\resources" \
+  --hidden-import bleak --hidden-import bleak.backends.winrt \
+  --hidden-import vosk --hidden-import sounddevice \
+  --hidden-import PySide6.QtMultimedia \
   main.py
 ```
 
 ---
 
-## v1.0 — מה חדש
-- **מעבר לספריית PyQt6** — כל הממשק נבנה מחדש על גבי PyQt6 (במקום PySide6), כולל תיקון קפדני של כל ה-Enums שנדרשים ל-Qt6
-- **עיצוב חדש לגמרי** — ערכות נושא בהיר/כהה מעוצבות מחדש: פינות מעוגלות, צבעוניות עקבית, מצבי hover/pressed/disabled ברורים לכל רכיב בתוכנה
-- **אייקון מעוצב** — אייקון 256px חדש (פלאפון + סימון "כשר") משולב בסרגל הניווט, בלשונית אודות, ובקובץ ה-EXE
-- **לשונית בית חכם מלאה** — שליטה ברכיבי בית חכם (כגון פיוז חכם) דרך קו טלפוני: הקצאת מקש לכל רכיב, מצבים מותאמים אישית, הכרזה קולית מוקלטת לכל רכיב, והפעלה/כיבוי לזמן קצוב עם כיבוי אוטומטי
-- **אימות וחיזוק ארכיטקטורת הבלוטוס** — המחשב ממשיך להתחבר לפלאפון כדיבורית HFP לכל דבר (AT commands בלבד), עם בדיקה אמיתית שכל פקודה נשלחה בהצלחה לפני עדכון המצב בממשק
-- **תרגום מלא לאנגלית** — כל טקסטי הממשק מתורגמים, כולל יישור LTR וסרגל ניווט שעובר לצד שמאל בשפה האנגלית (ונשאר מימין בעברית)
-- **תמיכה במספר מכשירי בלוטוס** — רשימת מכשירים מוכרים עם שם מותאם אישית, סימון מכשיר ראשי, וזיהוי מספר הטלפון המחובר אוטומטית (AT+CNUM)
-- **חיבור בלוטוס אמין יותר** — איתור ערוץ RFCOMM אמיתי דרך Windows (WinRT/SDP), חיבור-מחדש אוטומטי בניתוק לא צפוי, ותצוגת "מצב הדגמה" ברורה כשאין חיבור אמיתי
-- **מתג הפעלה/כיבוי לכל לשונית** — ניתן לכבות זמנית שירות (למשל בית חכם) מבלי לאבד הגדרות
-- **כפתור שליחה מודרני** בלשונית הודעות — חץ עגול שקוף
-- שינוי שפה מיידי — RTL/LTR מוחל בלחיצה ללא הפעלה מחדש
-- לשונית בייביסיטר — ניטור קולי מלא עם AI זיהוי בכי/קול
-- `LanguageManager` מרכזי מנהל את כל שינויי השפה
+## 🗂️ מבנה הפרויקט
 
-## מבנה לשוניות
 ```
-פלאפון כשר חכם v1.0
-├── ממשק שיחה (חיוג / שיחה פעילה / אנשי קשר / יומן / הקלטות / הגדרות)
-├── מכשירים (מכשירים מוכרים מרובים + סריקה + זיהוי מספר אוטומטי)
-├── תא קולי (הודעות / כללי מענה / הודעות פתיח)
-├── בייביסיטר (שלוחות / ניטור / התראות / מענה אוטומטי)
-├── קו תכנים ← בפיתוח
-├── הודעות (DTMF TextModem)
-├── בית חכם ← חדש! (לוח בקרה / ניהול רכיבים / קו הבית החכם)
-├── מחשב שלי ← בפיתוח
-├── הגדרות (ססמה / שפה מיידית / ערכת נושא)
-└── אודות
+SmartKosherPhone/
+├── main.py                 ← נקודת הכניסה
+├── app/                    ← חבילת האפליקציה (מסכים, עיצוב, משאבים)
+│   ├── resources/          ← אייקונים (icon.ico, icon_256.png)
+│   ├── style_light.qss     ← ערכת נושא בהירה
+│   └── style_dark.qss      ← ערכת נושא כהה
+├── docs/banner.svg         ← באנר (קובץ זה)
+└── run.bat                 ← הפעלה מהירה
 ```
 
-כל לשונית (מלבד מכשירים, הגדרות ואודות) כוללת מתג הפעלה/כיבוי בראשה.
+---
 
+## ❓ פתרון בעיות
+
+| בעיה | פתרון |
+|---|---|
+| הפלאפון לא מתחבר | ודאו שהדיבורית במצב זוגות; בדקו בלשונית מכשירים שהמכשיר נראה בסריקה |
+| ללא קול | ודאו שהפלאפון מוגדר כדיבורית HFP (לא A2DP בלבד) |
+| הקובץ גדול מדי להורדה | זה תקין — הקובץ מכיל את כל ה-Python וספריות הקול; ניתן להריץ מהקוד עם `pip install` |
+| אנטי-וירוס חוסם את ה-EXE | תופעה נפוצה עם Nuitka/PyInstaller — הוסיפו חריג (False Positive) |
