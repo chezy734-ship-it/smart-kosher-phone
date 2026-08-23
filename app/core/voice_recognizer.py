@@ -98,7 +98,9 @@ class VoiceRecognizer(QObject):
             self._engine = "vosk"
             self.status_changed.emit(self._t("מנוע זיהוי: Vosk (אופליין)", "Recognition engine: Vosk (offline)"))
             return
-        except ImportError:
+        except (ImportError, FileNotFoundError, OSError):
+            # FileNotFoundError נוצר כש-Vosk מוטען דרך PyInstaller
+            # וה-DLLs (__init__.py()) לא נמצאים בתיקיית הזמני (_MEI)
             pass
         try:
             import speech_recognition as sr

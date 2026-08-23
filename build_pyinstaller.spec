@@ -39,6 +39,12 @@ hiddenimports = [
     'app.pages.messaging',
     'app.pages.smarthome',
     'app.widgets',
+    'vosk',
+    'vosk.vosk_cffi',
+    'vosk.transcriber',
+    'srt',
+    'tqdm',
+    'requests',
 ]
 
 datas = [
@@ -47,15 +53,29 @@ datas = [
     ('app/resources',       'app/resources'),
 ]
 
+# ── Vosk binary DLLs — required for voice recognition ──
+import importlib.util
+_vosk_dir = None
+spec = importlib.util.find_spec('vosk')
+if spec and spec.origin:
+    _vosk_dir = os.path.dirname(spec.origin)
+
+vosk_binaries = []
+if _vosk_dir:
+    for _f in os.listdir(_vosk_dir):
+        if _f.lower().endswith('.dll'):
+            vosk_binaries.append(
+                (os.path.join(_vosk_dir, _f), 'vosk'))
+
 a = Analysis(
     ['main.py'],
     pathex=['.'],
-    binaries=[],
+    binaries=vosk_binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
-    excludes=['tkinter', 'matplotlib', 'numpy'],
+    excludes=['tkinter', 'matplotlib'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
