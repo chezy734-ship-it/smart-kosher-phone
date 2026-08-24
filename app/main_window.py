@@ -8,10 +8,10 @@ from typing import Optional
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QStackedWidget, QTabWidget, QFrame, QApplication
+    QStackedWidget, QTabWidget, QFrame, QApplication, QLabel
 )
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QFont
 
 from app.bluetooth_manager import BluetoothManager, CallInfo
 from app.core.recording_manager import RecordingManager
@@ -109,6 +109,22 @@ class MainWindow(QMainWindow):
 
         self.status_bar_widget = StatusBarWidget(self.bt, self.lang_mgr)
         root_v.addWidget(self.status_bar_widget)
+
+        # Demo mode banner (yellow, hidden by default)
+        self.demo_banner = QLabel()
+        self.demo_banner.setObjectName("demoModeBanner")
+        self.demo_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.demo_banner.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        self.demo_banner.setText("⚠️ מצב הדגמה מפעיל — כל השיחות מדומות ולא אמיתיות — לחץ סריקה ממצא למצב רגיל")
+        self.demo_banner.setVisible(False)
+        self.demo_banner.setStyleSheet(
+            "background-color: #FFF3CD; color: #856404; padding: 8px; border-bottom: 1px solid #FFECB5;")
+        root_v.addWidget(self.demo_banner)
+
+        # Timer to poll simulation mode
+        self._demo_timer = QTimer(self)
+        self._demo_timer.timeout.connect(self._update_demo_banner)
+        self._demo_timer.start(2000)
 
         # Body: internally always LTR — physical left/right order of
         # page_stack vs. side_nav is controlled explicitly by
@@ -220,6 +236,11 @@ class MainWindow(QMainWindow):
             self.body_h.addWidget(self.side_nav)
             self.body_h.addWidget(self.vdiv)
             self.body_h.addWidget(self.page_stack, 1)
+
+    def _update_demo_banner(self):
+        """Show/hide the yellow demo mode banner based on bt.simulation_mode."""
+        is_demo = self.bt.simulation_mode
+        self.demo_banner.setVisible(is_demo)
 
     def _build_call_page(self):
         self._call_container = QWidget()

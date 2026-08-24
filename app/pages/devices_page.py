@@ -316,7 +316,7 @@ class DevicesPage(QWidget, Translatable):
         self._refresh_known_list()
 
     def _unpair_device(self, address: str):
-        """הסר זיהוי מומש מהמתאם בבלוטוס מוותן Windows + הסרת מהרשימה מהאפליקציה"""
+        """הסר זיהוי מומש מהמתאם בבלוטוס מוותן Windows"""
         reply = QMessageBox.question(
             self,
             self.t("הסרת זיהוי", "Unpair Device"),
@@ -331,7 +331,7 @@ class DevicesPage(QWidget, Translatable):
             self.bt.unpair_device(address)
 
     def _on_device_unpaired(self, address: str):
-        """רענות אחרי אפרס את המכשיר מהמתאם בבלוטוס"""
+        """רענות אחרי סירות ההתאמה מהמתאם בבלוטוס"""
         self.registry.remove(address)
         self._refresh_known_list()
 
