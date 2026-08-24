@@ -8,7 +8,7 @@ from typing import Optional
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QStackedWidget, QTabWidget, QFrame, QApplication, QLabel
+    QStackedWidget, QTabWidget, QFrame, QApplication, QLabel, QMessageBox
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QFont
@@ -296,6 +296,7 @@ class MainWindow(QMainWindow):
         self.dialer_tab.dial_requested.connect(self._initiate_call)
         self.contacts_tab.dial_requested.connect(self._initiate_call)
         self.call_log_tab.dial_requested.connect(self._initiate_call)
+        self.call_log_tab.add_contact_requested.connect(self._add_contact_from_log)
 
         # Active call
         self.active_call_tab.hangup_requested.connect(self._hangup)
@@ -400,7 +401,13 @@ class MainWindow(QMainWindow):
 
     def _initiate_call(self, number: str):
         if not self.bt.is_connected:
-            self._on_status(self._t("לא מחובר לפלאפון", "Not connected to a phone"))
+            QMessageBox.warning(
+                self,
+                self.t("לא מחובר", "Not Connected"),
+                self.t(
+                    "אני לא מחובר לפלאשון. התחבר למכשיר בבלוטוס תחילה כמוחר על מכשיר מכוינות.",
+                    "You are not connected to a phone. Connect to a Bluetooth device first."),
+                QMessageBox.StandardButton.Ok)
             return
         name = self.bt.get_contacts().get(number, "")
         self.bt.dial(number)
@@ -411,6 +418,13 @@ class MainWindow(QMainWindow):
         self._go_call(self.active_call_tab)
         if self.rec_mgr.should_record(number):
             self.rec_mgr.start_recording(number, name, "outgoing")
+
+    def _add_contact_from_log(self, number: str, name: str):
+        """הוסף איש קשר מיומן שיחות"""
+        self.bt.add_contact(number, name)
+        self._on_status(self._t(
+            f"הוסף {name or number} לאנשי קשר",
+            f"Added {name or number} to contacts"))
 
     def _on_incoming_call(self, call_info: CallInfo):
         self._call_info = call_info

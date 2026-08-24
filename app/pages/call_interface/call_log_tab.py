@@ -76,10 +76,19 @@ class CallLogItem(QWidget, Translatable):
         self.tr_set(self.dial_btn, "חייג בחזרה", "Call back", setter="setToolTip")
         ly.addWidget(self.dial_btn)
 
+        self.add_contact_btn = QPushButton("➕")
+        self.add_contact_btn.setObjectName("addContactFromLogBtn")
+        self.add_contact_btn.setFixedSize(34, 34)
+        self.add_contact_btn.setFont(QFont("Segoe UI Emoji", 14))
+        self.add_contact_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tr_set(self.add_contact_btn, "הוסף לאנשי קשר", "Add to contacts", setter="setToolTip")
+        ly.addWidget(self.add_contact_btn)
+
 
 class LogListWidget(QWidget, Translatable):
     """רשימת שיחות לפי סינון"""
     dial_requested = Signal(str)
+    add_contact_requested = Signal(str, str)  # number, name
 
     def __init__(self, call_log: CallLog, language_manager, direction: str = "", parent=None):
         super().__init__(parent)
@@ -129,6 +138,8 @@ class LogListWidget(QWidget, Translatable):
             w = CallLogItem(entry, self._lang_mgr)
             w.dial_btn.clicked.connect(
                 lambda _, n=entry.number: self.dial_requested.emit(n))
+            w.add_contact_btn.clicked.connect(
+                lambda _, n=entry.number, nm=entry.name: self.add_contact_requested.emit(n, nm))
             item.setSizeHint(QSize(0, 62))
             self._list.addItem(item)
             self._list.setItemWidget(item, w)
@@ -160,6 +171,7 @@ class LogListWidget(QWidget, Translatable):
 
 class CallLogTab(QWidget, Translatable):
     dial_requested = Signal(str)
+    add_contact_requested = Signal(str, str)  # number, name
 
     def __init__(self, call_log: CallLog, language_manager, parent=None):
         super().__init__(parent)
@@ -214,6 +226,7 @@ class CallLogTab(QWidget, Translatable):
         for he, en, direction in filters:
             w = LogListWidget(self._log, language_manager, direction)
             w.dial_requested.connect(self.dial_requested)
+            w.add_contact_requested.connect(self.add_contact_requested)
             idx = self._filter_tabs.addTab(w, "")
             self.tr_tab(self._filter_tabs, idx, he, en)
             self._sub_lists.append(w)
