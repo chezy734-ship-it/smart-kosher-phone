@@ -368,23 +368,20 @@ $result | ConvertTo-Json -Compress
         self.status_message.emit(msg)
         self.connection_error.emit(msg)
 
-        if _is_reconnect:
-            # Don't silently fall back to demo mode on a background
-            # reconnect attempt — surface the failure and keep retrying.
+        # *** FIXED: never silently fall back to simulation mode.
+        # In simulation mode, dial() fakes calls that never reach the
+        # phone, and incoming AT responses (RING/+CLIP) are never
+        # received — so the user thinks a call happened when it didn't.
+        # Instead, always surface the failure and keep retrying.
+        if _is_reconnect or not self._user_disconnected:
             self._schedule_reconnect(address)
-            return
-
-        # Graceful fallback for a *manual* connect attempt: mark as
-        # simulation so the UI still works, but be explicit about it.
-        self._simulation_mode = True
-        dev.connected = True
-        self._current_device = dev
-        self.device_connected.emit(dev)
-        self.status_message.emit(self._t(
-            f"לא הצלחתי להתחבר בפועל ל-{dev.name} — עברתי למצב הדגמה "
-            f"(בדוק שהמכשיר מותאם/paired ובטווח בלוטוס)",
-            f"Could not establish a real connection to {dev.name} — switched to "
-            f"demo mode (check the device is paired and in Bluetooth range)"))
+        else:
+            # Manual connect attempt — tell the user it failed.
+            self.status_message.emit(self._t(
+                f"לא הצלחתי להתחבר בפועל ל-{dev.name} — "
+                f"בדוק שהמכשיר מותאם (paired) ובטווח בלוטוס",
+                f"Could not connect to {dev.name} — "
+                f"check the device is paired and in Bluetooth range"))
 
     def _probe_rfcomm_channel(self, address: str) -> int:
         """
@@ -506,13 +503,15 @@ if ($svcResult.Services.Count -gt 0) {{
     def disconnect_device(self):
         """נתק את המכשיר (ביוזמת המשתמש — לא יתבצע חיבור-מחדש אוטומטי)"""
         self._user_disconnected = True
-        self._running = False
+        # סגור את הסוקט לפני ש-_running=False כדי שלולאת AT Reader
+        # תראה שהסוקט נסגר ותצא בניקיון (ולא תנסה recv על סוקט סגור).
         if self._rfcomm_sock:
             try:
                 self._rfcomm_sock.close()
             except Exception:
                 pass
             self._rfcomm_sock = None
+        self._running = False
 
         if self._current_device:
             addr = self._current_device.address
@@ -569,13 +568,19 @@ if ($svcResult.Services.Count -gt 0) {{
             return False
 
     def _at_reader_loop(self):
-        """לולאת קריאת תגובות AT מהפלאפון (רץ ב-thread נפרד)"""
+        """לולאת קריאת תגובות AT מהפלאפון (רץ ב-thread נפרד)
+
+        socket.timeout (הסוקט לא קיבל נתונים בזמן timeout) הוא מצב תקין —
+        הפלאפון פשוט לא שולח כלום כרגע. רק OSError`
+        (ניתוק אמיתי / שגיאת רשת) מצדיק סגירת הלולאה.
+        """
         self._rfcomm_sock.settimeout(1.0)
         buf = ""
         while self._running:
             try:
                 chunk = self._rfcomm_sock.recv(256).decode("ascii", errors="ignore")
                 if not chunk:
+                    # recv מחזיר bait ריקים — החיבור באמת נסגר
                     break
                 buf += chunk
                 # AT responses are separated by \r\n
@@ -585,8 +590,13 @@ if ($svcResult.Services.Count -gt 0) {{
                     if line:
                         self._parse_at(line)
             except socket.timeout:
+                # timeout רגיל — הפלאפון לא שלח נתונים כרגע.
+                # לא נפרץ מהלולאה — אלא אם disconnect_device סגר את הסוקט.
+                if self._rfcomm_sock is None:
+                    break
                 continue
             except OSError:
+                # ניתוק אמיתי — סגירה
                 break
         was_user_disconnect = self._user_disconnected
         addr = self._current_device.address if self._current_device else None
