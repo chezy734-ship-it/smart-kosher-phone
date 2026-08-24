@@ -15,6 +15,8 @@ from app.core.language_manager import Translatable
 
 
 class CallLogItem(QWidget, Translatable):
+    number_clicked = Signal(str)
+
     def __init__(self, entry: CallLogEntry, language_manager, parent=None):
         super().__init__(parent)
         self._init_translator(language_manager)
@@ -55,6 +57,9 @@ class CallLogItem(QWidget, Translatable):
         num_lbl.setObjectName("logNumber")
         num_lbl.setFont(QFont("Segoe UI", 9))
         num_lbl.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        num_lbl.setCursor(Qt.CursorShape.PointingHandCursor)
+        num_lbl.setStyleSheet("color: #42A5F5; text-decoration: underline;")
+        num_lbl.mousePressEvent = lambda _, n=entry.number: self.number_clicked.emit(n)
         bot.addWidget(num_lbl)
         dir_lbl = QLabel(f"  •  {entry.direction_label_for(is_rtl)}")
         dir_lbl.setObjectName("logDirLabel")
@@ -140,6 +145,7 @@ class LogListWidget(QWidget, Translatable):
                 lambda _, n=entry.number: self.dial_requested.emit(n))
             w.add_contact_btn.clicked.connect(
                 lambda _, n=entry.number, nm=entry.name: self.add_contact_requested.emit(n, nm))
+            w.number_clicked.connect(self.dial_requested)
             item.setSizeHint(QSize(0, 62))
             self._list.addItem(item)
             self._list.setItemWidget(item, w)

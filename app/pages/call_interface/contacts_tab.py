@@ -51,6 +51,8 @@ class AddContactDialog(QDialog, Translatable):
 
 
 class ContactItem(QWidget, Translatable):
+    number_clicked = Signal(str)
+
     def __init__(self, number: str, name: str, language_manager, parent=None):
         super().__init__(parent)
         self._init_translator(language_manager)
@@ -80,6 +82,9 @@ class ContactItem(QWidget, Translatable):
         num_lbl.setObjectName("contactNumber")
         num_lbl.setFont(QFont("Segoe UI", 10))
         num_lbl.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        num_lbl.setCursor(Qt.CursorShape.PointingHandCursor)
+        num_lbl.setStyleSheet("color: #42A5F5; text-decoration: underline;")
+        num_lbl.mousePressEvent = lambda _, n=number: self.number_clicked.emit(n)
         info.addWidget(num_lbl)
 
         layout.addLayout(info, 1)
@@ -177,6 +182,7 @@ class ContactsTab(QWidget, Translatable):
         widget = ContactItem(number, name, self._lang_mgr)
         widget.dial_btn.clicked.connect(
             lambda _, n=number: self.dial_requested.emit(n))
+        widget.number_clicked.connect(self.dial_requested)
         item.setSizeHint(QSize(0, 68))
         self.contact_list.addItem(item)
         self.contact_list.setItemWidget(item, widget)

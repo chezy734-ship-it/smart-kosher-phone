@@ -19,10 +19,10 @@ class DialButton(QPushButton):
         ly = QVBoxLayout(self)
         ly.setContentsMargins(0,4,0,4); ly.setSpacing(0)
         d = QLabel(digit); d.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        d.setObjectName("dialDigit"); ly.addWidget(d)
+        d.setObjectName("dialDigit"); d.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents); ly.addWidget(d)
         if sub:
             s = QLabel(sub); s.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            s.setObjectName("dialSub"); ly.addWidget(s)
+            s.setObjectName("dialSub"); s.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents); ly.addWidget(s)
         self.setMinimumSize(80,66); self.setMaximumSize(110,76)
         self.setObjectName("dialButton"); self.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -73,7 +73,7 @@ class DialerTab(QWidget, Translatable):
                 ("7","PQRS"),("8","TUV"),("9","WXYZ"),
                 ("*",""),("0","+"),("#","")]
         for i,(d,s) in enumerate(btns):
-            r,c = divmod(i,3); c = 2-c
+            r,c = divmod(i,3)
             b = DialButton(d,s)
             b.clicked.connect(lambda _,x=d: self.number_display.insert(x))
             grid.addWidget(b,r,c)
