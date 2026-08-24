@@ -152,6 +152,7 @@ class BluetoothManager(QObject):
 
     def scan_devices(self):
         """סרוק מכשירים — BLE דרך Bleak, Classic דרך PowerShell"""
+        self._simulation_mode = False
         self.status_message.emit(self._t("סורק מכשירי בלוטוס…", "Scanning for Bluetooth devices…"))
         t = threading.Thread(target=self._scan_thread, daemon=True)
         t.start()
@@ -178,10 +179,6 @@ class BluetoothManager(QObject):
                     found.append(d)
         except Exception as exc:
             self.status_message.emit(f"BLE scan: {exc}")
-
-        if not found:
-            # No hardware or permissions — switch to demo
-            found = self._get_sim_devices()
 
         self.scan_finished.emit(found)
         self.status_message.emit(self._t(f"נמצאו {len(found)} מכשירים", f"Found {len(found)} devices"))
