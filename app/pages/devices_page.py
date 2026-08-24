@@ -5,7 +5,8 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QListWidgetItem,
-    QFrame, QProgressBar, QLineEdit, QTabWidget
+    QFrame, QProgressBar, QLineEdit, QTabWidget,
+    QMessageBox
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont
@@ -55,7 +56,7 @@ class DeviceItem(QWidget, Translatable):
 class KnownDeviceRow(QWidget, Translatable):
     """שורה ברשימת המכשירים המוכרים — שם ניתן לעריכה, מספר טלפון, מתג ראשי"""
 
-    def __init__(self, dev, language_manager, on_rename, on_set_primary, on_remove, parent=None):
+    def __init__(self, dev, language_manager, on_rename, on_set_primary, on_remove, on_unpair, parent=None):
         super().__init__(parent)
         self._init_translator(language_manager)
         self.address = dev.address
@@ -108,6 +109,14 @@ class KnownDeviceRow(QWidget, Translatable):
         self.tr_set(self.remove_btn, "הסר מהרשימה", "Remove from list", setter="setToolTip")
         self.remove_btn.clicked.connect(lambda: on_remove(dev.address))
         layout.addWidget(self.remove_btn)
+
+        self.unpair_btn = QPushButton("🗑️")
+        self.unpair_btn.setObjectName("unpairDeviceBtn")
+        self.unpair_btn.setFixedWidth(28)
+        self.unpair_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tr_set(self.unpair_btn, "הסר מומש מהמתאם בבלוטוס", "Remove Bluetooth pairing", setter="setToolTip")
+        self.unpair_btn.clicked.connect(lambda: on_unpair(dev.address))
+        layout.addWidget(self.unpair_btn)
 
     def _set_number(self, number: str):
         if number:
@@ -271,6 +280,7 @@ class DevicesPage(QWidget, Translatable):
         self.bt.device_connected.connect(self._on_device_connected)
         self.bt.device_disconnected.connect(self._on_device_disconnected)
         self.bt.device_number_resolved.connect(self._on_number_resolved)
+        self.bt.device_unpaired.connect(self._on_device_unpaired)
         self.device_list.currentRowChanged.connect(
             lambda r: self.btn_connect.setEnabled(r >= 0))
 
@@ -286,7 +296,8 @@ class DevicesPage(QWidget, Translatable):
         for dev in self.registry.all_devices():
             item = QListWidgetItem()
             row = KnownDeviceRow(dev, self._lang_mgr, self._rename_device,
-                                  self._set_primary_device, self._remove_device)
+                                  self._set_primary_device, self._remove_device,
+                                  self._unpair_device)
             item.setSizeHint(QSize(0, 58))
             self.known_list.addItem(item)
             self.known_list.setItemWidget(item, row)
@@ -301,6 +312,26 @@ class DevicesPage(QWidget, Translatable):
             row.set_primary(addr == address)
 
     def _remove_device(self, address: str):
+        self.registry.remove(address)
+        self._refresh_known_list()
+
+    def _unpair_device(self, address: str):
+        """הסר זיהוי מומש מהמתאם בבלוטוס מוותן Windows + הסרת מהרשימה מהאפליקציה"""
+        reply = QMessageBox.question(
+            self,
+            self.t("הסרת זיהוי", "Unpair Device"),
+            self.t(
+                "האם אתה בטחון להסיר את ההתאמה בבלוטוס למאחוז מהמתאם זו?
+המכשיר יוסר מהנתנה מאפשרות להתחבר מחדש.",
+                "Are you sure you want to remove the Bluetooth pairing? The device will be forgotten by Windows."),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self.bt.unpair_device(address)
+
+    def _on_device_unpaired(self, address: str):
+        """רענות אחרי אפרס את המכשיר מהמתאם בבלוטוס"""
         self.registry.remove(address)
         self._refresh_known_list()
 

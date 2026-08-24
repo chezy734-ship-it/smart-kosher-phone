@@ -85,6 +85,7 @@ class BluetoothManager(QObject):
     status_message      = Signal(str)
     device_number_resolved = Signal(str, str)  # address, phone number (AT+CNUM)
     reconnecting         = Signal(str, int)    # address, attempt number
+    device_unpaired       = Signal(str)      # address
 
     # ── Init ─────────────────────────────────────────────
     def __init__(self, parent=None, language_manager=None):
@@ -519,6 +520,66 @@ if ($svcResult.Services.Count -gt 0) {{
             self._current_device = None
             self.device_disconnected.emit(addr)
             self.status_message.emit(self._t("המכשיר נותק", "Device disconnected"))
+
+
+    def unpair_device(self, address: str):
+        """
+        הסר התאמה (unpair) של מכשיר בלוטוס מהמחשב砗
+        משתמש ב-PowerShell כדי להסיר את המכשיר מ-WindowsBT stack.
+        """
+        if self._current_device and self._current_device.address == address:
+            self.disconnect_device()
+
+        # PowerShell: find the PnP device with this MAC, then remove it
+        ps_script = f"""
+$mac = '{address}'
+# Normalize MAC to Windows format (no colons/dashes)
+$macRaw = $mac -replace '[:\-]', ''
+
+# Find the Bluetooth device instance
+$devices = Get-PnpDevice -Class Bluetooth 2>$null |
+    Where-Object {{ $_.InstanceId -match $macRaw }}
+
+$removed = 0
+foreach ($d in $devices) {{
+    Disable-PnpDevice -InstanceId $d.InstanceId -Confirm:$false 2>$null
+    Remove-PnpDevice -InstanceId $d.InstanceId -Confirm:$false 2>$null
+    $removed++
+}}
+
+# Also remove from registry paired devices
+$regPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices'
+Get-ChildItem $regPath 2>$null | ForEach-Object {{
+    $devId = $_.PSChildName
+    if ($devId -match $macRaw) {{
+        Remove-Item $_.PSPath -Recurse -Force 2>$null
+        $removed++
+    }}
+}}
+
+Write-Output $removed
+"""
+        try:
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive",
+                 "-ExecutionPolicy", "Bypass", "-Command", ps_script],
+                capture_output=True, text=True, timeout=15, encoding="utf-8"
+            )
+            removed = int(result.stdout.strip() or "0")
+            if removed > 0:
+                self.status_message.emit(self._t(
+                    f"המכשיר {address} הוסר מ-Windows",
+                    f"Device {address} removed from Windows"))
+            else:
+                self.status_message.emit(self._t(
+                    f"המכשיר {address} לא נמצא ב-Windows (אולי כבר הוסר)",
+                    f"Device {address} not found in Windows (may already be removed)"))
+        except Exception as exc:
+            self.status_message.emit(self._t(
+                f"שגיאה בהסרת מכשיר: {exc}",
+                f"Error removing device: {exc}"))
+
+        self.device_unpaired.emit(address)
 
     # ══════════════════════════════════════════════════════
     #  HFP Handshake + AT I/O
