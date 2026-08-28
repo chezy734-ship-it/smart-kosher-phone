@@ -8,7 +8,13 @@ block_cipher = None
 # Collect all app sub-packages
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
+# ── Auto-collect ALL app.* submodules ──
+# This catches every .py file under app/ automatically,
+# including any new files added in the future.
+_app_modules = collect_submodules('app')
+
 hiddenimports = [
+    # Third-party
     'bleak',
     'bleak.backends.winrt',
     'bleak.backends.winrt.scanner',
@@ -19,42 +25,19 @@ hiddenimports = [
     'PyQt6.QtCore',
     'PyQt6.QtWidgets',
     'PyQt6.QtGui',
-    'app',
-    'app.bluetooth_manager',
-    'app.main_window',
-    'app.theme_manager',
-    'app.tray_manager',
-    'app.core',
-    'app.core.call_log',
-    'app.core.recording_manager',
-    'app.core.voicemail_manager',
-    'app.core.smart_home_engine',
-    'app.core.babysitter_engine',
-    'app.core.device_registry',
-    'app.core.service_toggles',
-    'app.pages',
-    'app.pages.about_page',
-    'app.pages.call_interface',
-    'app.pages.call_page',
-    'app.pages.contacts_page',
-    'app.pages.devices_page',
-    'app.pages.home_page',
-    'app.pages.incoming_page',
-    'app.pages.settings_page',
-    'app.pages.settings_page_main',
-    'app.pages.stub_page',
-    'app.pages.voicemail',
-    'app.pages.babysitter',
-    'app.pages.messaging',
-    'app.pages.smarthome',
-    'app.widgets',
     'vosk',
     'vosk.vosk_cffi',
     'vosk.transcriber',
     'srt',
     'tqdm',
     'requests',
-]
+    'numpy',
+    'numpy.core',
+    'numpy.core._methods',
+    'numpy.lib',
+    'numpy.lib.format',
+    'numpy.lib.npyio',
+] + _app_modules
 
 datas = [
     ('app/style_light.qss', 'app'),
